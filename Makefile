@@ -40,6 +40,43 @@ golang-docker: ## Builds Docker images for Go components using buildx
 			op-node op-batcher op-proposer op-challenger op-dispute-mon op-supervisor
 .PHONY: golang-docker
 
+op-node-docker: ## Builds Docker image for op-node only
+	GIT_COMMIT=$$(git rev-parse HEAD) \
+	GIT_DATE=$$(git show -s --format='%ct') \
+	IMAGE_TAGS=local \
+	DOCKER_BUILDKIT=1 \
+	docker buildx bake \
+		--progress plain \
+		--load \
+		-f docker-bake.hcl \
+		op-node
+.PHONY: op-node-docker
+
+op-batcher-docker: ## Builds Docker image for op-batcher only
+	GIT_COMMIT=$$(git rev-parse HEAD) \
+	GIT_DATE=$$(git show -s --format='%ct') \
+	IMAGE_TAGS=local \
+	DOCKER_BUILDKIT=1 \
+	docker buildx bake \
+		--progress plain \
+		--load \
+		-f docker-bake.hcl \
+		op-batcher
+.PHONY: op-batcher-docker
+
+op-proposer-docker: ## Builds Docker image for op-proposer only
+	GIT_COMMIT=$$(git rev-parse HEAD) \
+	GIT_DATE=$$(git show -s --format='%ct') \
+	IMAGE_TAGS=local \
+	DOCKER_BUILDKIT=1 \
+	docker buildx bake \
+		--progress plain \
+		--load \
+		-f docker-bake.hcl \
+		op-proposer
+.PHONY: op-proposer-docker
+
+
 docker-builder-clean: ## Removes the Docker buildx builder
 	docker buildx rm buildx-build
 .PHONY: docker-builder-clean

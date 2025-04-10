@@ -29,5 +29,10 @@ func DefaultGasPriceEstimatorFn(ctx context.Context, backend ETHBackend) (*big.I
 		blobFee = eth.CalcBlobFeeDefault(head)
 	}
 
+	// Note: 防止 blobFee 为 nil， op-batcher 会由于 blobFee 为 nil 而 panic
+	if blobFee == nil {
+		blobFee = big.NewInt(1)
+	}
+
 	return tip, head.BaseFee, blobFee, nil
 }

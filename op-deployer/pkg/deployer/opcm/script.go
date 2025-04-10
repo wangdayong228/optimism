@@ -40,6 +40,9 @@ func RunScriptSingle[I any, O any](
 	}
 	defer cleanupDeploy()
 
+	fmt.Printf("generated deployScript, script file: %s, contract name: %s\n", scriptFile, contractName)
+	fmt.Printf("run deployScript, inputAddr: %s, outputAddr: %s\n", inputAddr.Hex(), outputAddr.Hex())
+
 	if err := deployScript.Run(inputAddr, outputAddr); err != nil {
 		return output, fmt.Errorf("failed to run %s script: %w", scriptFile, err)
 	}

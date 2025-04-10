@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"runtime/debug"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -203,7 +204,7 @@ func (m *SimpleTxManager) Close() {
 func (m *SimpleTxManager) txLogger(tx *types.Transaction, logGas bool) log.Logger {
 	fields := []any{"tx", tx.Hash(), "nonce", tx.Nonce()}
 	if logGas {
-		fields = append(fields, "gasTipCap", tx.GasTipCap(), "gasFeeCap", tx.GasFeeCap(), "gasLimit", tx.Gas())
+		fields = append(fields, "gasTipCap", tx.GasTipCap(), "gasFeeCap", tx.GasFeeCap(), "gasLimit", tx.Gas(), "to", tx.To())
 	}
 	if len(tx.BlobHashes()) != 0 {
 		// log the number of blobs a tx has only if it's a blob tx
@@ -324,7 +325,7 @@ func (m *SimpleTxManager) prepare(ctx context.Context, candidate TxCandidate) (*
 		}
 		tx, err := m.craftTx(ctx, candidate)
 		if err != nil {
-			m.l.Warn("Failed to create a transaction, will retry", "err", err)
+			m.l.Warn("Failed to create a transaction, will retry", "err", err, "stack", string(debug.Stack()))
 		}
 		return tx, err
 	})
@@ -631,8 +632,16 @@ func (m *SimpleTxManager) publishTx(ctx context.Context, tx *types.Transaction, 
 			}
 		}
 
+		// 在 m.backend.SendTransaction(cCtx, tx) 前添加
+		signer := types.LatestSignerForChainID(tx.ChainId())
+		sender, err := types.Sender(signer, tx)
+		if err != nil {
+			log.Error("无法恢复发送方地址", "err", err)
+		}
+		l = l.With("from", sender.Hex())
+
 		cCtx, cancel := context.WithTimeout(ctx, m.cfg.NetworkTimeout)
-		err := m.backend.SendTransaction(cCtx, tx)
+		err = m.backend.SendTransaction(cCtx, tx)
 		cancel()
 		sendState.ProcessSendError(err)
 

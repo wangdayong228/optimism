@@ -38,7 +38,7 @@ func main() {
 	// Set up logger with a default INFO level in case we fail to parse flags,
 	// otherwise the final critical log won't show what the parsing error was.
 	oplog.SetupDefaults()
-
+	log.Info("run op-node", "version", VersionWithMeta)
 	app := cli.NewApp()
 	app.Version = VersionWithMeta
 	app.Flags = cliapp.ProtectFlags(flags.Flags)
@@ -65,7 +65,6 @@ func main() {
 		},
 		interop.InteropCmd,
 	}
-
 	ctx := ctxinterrupt.WithSignalWaiterMain(context.Background())
 	err := app.RunContext(ctx, os.Args)
 	if err != nil {

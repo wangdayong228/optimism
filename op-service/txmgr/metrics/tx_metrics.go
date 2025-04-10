@@ -180,8 +180,12 @@ func (t *TxMetrics) RecordBaseFee(baseFee *big.Int) {
 }
 
 func (t *TxMetrics) RecordBlobBaseFee(blobBaseFee *big.Int) {
-	bff, _ := blobBaseFee.Float64()
-	t.blobBaseFee.Set(bff)
+	if blobBaseFee == nil {
+		t.blobBaseFee.Set(0)
+	} else {
+		bff, _ := blobBaseFee.Float64()
+		t.blobBaseFee.Set(bff)
+	}
 }
 
 func (t *TxMetrics) RecordTipCap(tipcap *big.Int) {

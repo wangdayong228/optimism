@@ -2,6 +2,7 @@ package broadcaster
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"math/big"
 	"sync"
@@ -94,6 +95,7 @@ func (t *KeyedBroadcaster) Hook(bcast script.Broadcast) {
 		panic(fmt.Sprintf("invalid from for broadcast:%v, expected:%v", bcast.From, t.mgr.From()))
 	}
 	t.mtx.Lock()
+	bcast.GasUsed = bcast.GasUsed * 2
 	t.bcasts = append(t.bcasts, bcast)
 	t.mtx.Unlock()
 }
@@ -124,6 +126,12 @@ func (t *KeyedBroadcaster) Broadcast(ctx context.Context) ([]BroadcastResult, er
 			"transaction broadcasted",
 			"id", ids[i],
 			"nonce", bcast.Nonce,
+			"from", bcast.From.String(),
+			"to", bcast.To.String(),
+			"input_bytes4", hex.EncodeToString(bcast.Input[:8]),
+			"value", bcast.Value.String(),
+			"gasUsed", bcast.GasUsed,
+			"type", bcast.Type,
 		)
 	}
 

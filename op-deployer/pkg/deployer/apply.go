@@ -295,15 +295,18 @@ func ApplyPipeline(
 
 	pline := []pipelineStage{
 		{"init", func() error {
+			fmt.Println("pipeline stages init")
 			if opts.DeploymentTarget == DeploymentTargetGenesis {
 				return pipeline.InitGenesisStrategy(pEnv, intent, st)
 			}
 			return pipeline.InitLiveStrategy(ctx, pEnv, intent, st)
 		}},
 		{"deploy-superchain", func() error {
+			fmt.Println("deploy-superchain")
 			return pipeline.DeploySuperchain(pEnv, intent, st)
 		}},
 		{"deploy-implementations", func() error {
+			fmt.Println("deploy-implementations")
 			return pipeline.DeployImplementations(pEnv, intent, st)
 		}},
 	}
