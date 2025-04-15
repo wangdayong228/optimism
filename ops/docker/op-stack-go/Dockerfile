@@ -155,7 +155,13 @@ COPY --from=op-wheel-builder /app/op-wheel/bin/op-wheel /usr/local/bin/
 CMD ["op-wheel"]
 
 FROM $TARGET_BASE_IMAGE AS op-node-target
+# 安装 Delve 调试工具
+RUN apk add --no-cache go git gcc musl-dev
+RUN go install github.com/go-delve/delve/cmd/dlv@latest
+ENV PATH=$PATH:/root/go/bin
 COPY --from=op-node-builder /app/op-node/bin/op-node /usr/local/bin/
+COPY --from=op-node-builder /app /app
+WORKDIR /app
 CMD ["op-node"]
 
 # Make the kona docker image published by upstream available as a source to copy kona and asterisc from.

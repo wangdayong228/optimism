@@ -11,7 +11,8 @@ _LDFLAGSSTRING := "'" + trim(
 BINARY := "./bin/op-node"
 
 # Build op-node binary
-op-node: (go_build BINARY "./cmd" "-ldflags" _LDFLAGSSTRING)
+_GCFLAGS := '"all=-N -l"'
+op-node: (go_build BINARY "./cmd" "-ldflags" _LDFLAGSSTRING "-gcflags=" + _GCFLAGS)
 
 # Clean build artifacts
 clean:
