@@ -586,7 +586,7 @@ func (n *OpNode) onEvent(ev event.Event) bool {
 }
 
 func (n *OpNode) OnNewL1Head(ctx context.Context, sig eth.L1BlockRef) {
-	n.log.Debug("Received new L1 head", "number", sig.Number, "hash", sig.Hash, "timestamp", sig.Time, "seq_number", sig.SequenceNumber, "parent_hash", sig.ParentHash)
+	n.log.Debug("Received new L1 head", "number", sig.Number, "hash", sig.Hash, "timestamp", sig.Time, "parent_hash", sig.ParentHash)
 	n.tracer.OnNewL1Head(ctx, sig)
 
 	if n.l2Driver == nil {
@@ -605,7 +605,7 @@ func (n *OpNode) OnNewL1Head(ctx context.Context, sig eth.L1BlockRef) {
 }
 
 func (n *OpNode) OnNewL1Safe(ctx context.Context, sig eth.L1BlockRef) {
-	n.log.Debug("Received new L1 safe block", "number", sig.Number, "hash", sig.Hash, "timestamp", sig.Time, "seq_number", sig.SequenceNumber, "parent_hash", sig.ParentHash)
+	n.log.Debug("Received new L1 safe block", "number", sig.Number, "hash", sig.Hash, "timestamp", sig.Time, "parent_hash", sig.ParentHash)
 
 	if n.l2Driver == nil {
 		n.log.Debug("L2 driver not initialized, ignoring L1 safe block update")
@@ -623,7 +623,7 @@ func (n *OpNode) OnNewL1Safe(ctx context.Context, sig eth.L1BlockRef) {
 }
 
 func (n *OpNode) OnNewL1Finalized(ctx context.Context, sig eth.L1BlockRef) {
-	n.log.Debug("Received new L1 finalized block", "number", sig.Number, "hash", sig.Hash, "timestamp", sig.Time, "seq_number", sig.SequenceNumber, "parent_hash", sig.ParentHash)
+	n.log.Debug("Received new L1 finalized block", "number", sig.Number, "hash", sig.Hash, "timestamp", sig.Time, "parent_hash", sig.ParentHash)
 
 	if n.l2Driver == nil {
 		n.log.Debug("L2 driver not initialized, ignoring L1 finalized block update")
