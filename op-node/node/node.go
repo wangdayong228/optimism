@@ -586,40 +586,57 @@ func (n *OpNode) onEvent(ev event.Event) bool {
 }
 
 func (n *OpNode) OnNewL1Head(ctx context.Context, sig eth.L1BlockRef) {
+	n.log.Debug("Received new L1 head", "number", sig.Number, "hash", sig.Hash, "timestamp", sig.Time, "seq_number", sig.SequenceNumber, "parent_hash", sig.ParentHash)
 	n.tracer.OnNewL1Head(ctx, sig)
 
 	if n.l2Driver == nil {
+		n.log.Debug("L2 driver not initialized, ignoring L1 head update")
 		return
 	}
 	// Pass on the event to the L2 Engine
 	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
+	n.log.Debug("Forwarding L1 head update to L2 driver", "l1_head", sig)
 	if err := n.l2Driver.OnL1Head(ctx, sig); err != nil {
 		n.log.Warn("failed to notify engine driver of L1 head change", "err", err)
+	} else {
+		n.log.Debug("Successfully notified L2 driver of L1 head change")
 	}
 }
 
 func (n *OpNode) OnNewL1Safe(ctx context.Context, sig eth.L1BlockRef) {
+	n.log.Debug("Received new L1 safe block", "number", sig.Number, "hash", sig.Hash, "timestamp", sig.Time, "seq_number", sig.SequenceNumber, "parent_hash", sig.ParentHash)
+
 	if n.l2Driver == nil {
+		n.log.Debug("L2 driver not initialized, ignoring L1 safe block update")
 		return
 	}
 	// Pass on the event to the L2 Engine
 	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
+	n.log.Debug("Forwarding L1 safe block update to L2 driver", "l1_safe", sig)
 	if err := n.l2Driver.OnL1Safe(ctx, sig); err != nil {
 		n.log.Warn("failed to notify engine driver of L1 safe block change", "err", err)
+	} else {
+		n.log.Debug("Successfully notified L2 driver of L1 safe block change")
 	}
 }
 
 func (n *OpNode) OnNewL1Finalized(ctx context.Context, sig eth.L1BlockRef) {
+	n.log.Debug("Received new L1 finalized block", "number", sig.Number, "hash", sig.Hash, "timestamp", sig.Time, "seq_number", sig.SequenceNumber, "parent_hash", sig.ParentHash)
+
 	if n.l2Driver == nil {
+		n.log.Debug("L2 driver not initialized, ignoring L1 finalized block update")
 		return
 	}
 	// Pass on the event to the L2 Engine
 	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
+	n.log.Debug("Forwarding L1 finalized block update to L2 driver", "l1_finalized", sig)
 	if err := n.l2Driver.OnL1Finalized(ctx, sig); err != nil {
 		n.log.Warn("failed to notify engine driver of L1 finalized block change", "err", err)
+	} else {
+		n.log.Debug("Successfully notified L2 driver of L1 finalized block change")
 	}
 }
 

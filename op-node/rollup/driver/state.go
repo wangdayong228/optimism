@@ -254,12 +254,15 @@ func (s *Driver) eventLoop() {
 				}
 			}
 		case newL1Head := <-s.l1HeadSig:
+			s.log.Debug("Driver received new L1 head signal", "l1_head", newL1Head)
 			s.Emitter.Emit(status.L1UnsafeEvent{L1Unsafe: newL1Head})
 			reqStep() // a new L1 head may mean we have the data to not get an EOF again.
 		case newL1Safe := <-s.l1SafeSig:
+			s.log.Debug("Driver received new L1 safe signal", "l1_safe", newL1Safe)
 			s.Emitter.Emit(status.L1SafeEvent{L1Safe: newL1Safe})
 			// no step, justified L1 information does not do anything for L2 derivation or status
 		case newL1Finalized := <-s.l1FinalizedSig:
+			s.log.Debug("Driver received new L1 finalized signal", "l1_finalized", newL1Finalized)
 			s.emitter.Emit(finality.FinalizeL1Event{FinalizedL1: newL1Finalized})
 			reqStep() // we may be able to mark more L2 data as finalized now
 		case <-s.sched.NextDelayedStep():

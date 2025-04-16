@@ -83,6 +83,7 @@ func (st *StatusTracker) OnEvent(ev event.Event) bool {
 		st.data.LocalSafeL2 = x.LocalSafe
 	case derive.DeriverL1StatusEvent:
 		st.data.CurrentL1 = x.Origin
+		st.log.Debug("Updated L1 derivation origin", "origin", x.Origin)
 	case L1UnsafeEvent:
 		st.metrics.RecordL1Ref("l1_head", x.L1Unsafe)
 		// We don't need to do anything if the head hasn't changed.
@@ -93,10 +94,15 @@ func (st *StatusTracker) OnEvent(ev event.Event) bool {
 		} else if st.data.HeadL1.Hash == x.L1Unsafe.ParentHash {
 			// We got a new L1 block whose parent hash is the same as the current L1 head. Means we're
 			// dealing with a linear extension (new block is the immediate child of the old one).
-			st.log.Debug("L1 head moved forward", "l1_head", x.L1Unsafe)
+			st.log.Debug("L1 head moved forward", "l1_head", x.L1Unsafe, "prev_head", st.data.HeadL1)
 		} else {
 			if st.data.HeadL1.Number >= x.L1Unsafe.Number {
-				st.metrics.RecordL1ReorgDepth(st.data.HeadL1.Number - x.L1Unsafe.Number)
+				reorgDepth := st.data.HeadL1.Number - x.L1Unsafe.Number
+				st.metrics.RecordL1ReorgDepth(reorgDepth)
+				st.log.Warn("L1 chain reorg detected", "depth", reorgDepth, "prev_head", st.data.HeadL1, "new_head", x.L1Unsafe)
+			} else {
+				// If new head is higher number but not a direct child, could be skipping blocks or a reorg
+				st.log.Debug("L1 head non-linear change", "prev_head", st.data.HeadL1, "new_head", x.L1Unsafe, "block_delta", x.L1Unsafe.Number-st.data.HeadL1.Number)
 			}
 			// New L1 block is not the same as the current head or a single step linear extension.
 			// This could either be a long L1 extension, or a reorg, or we simply missed a head update.
@@ -105,11 +111,11 @@ func (st *StatusTracker) OnEvent(ev event.Event) bool {
 		}
 		st.data.HeadL1 = x.L1Unsafe
 	case L1SafeEvent:
-		st.log.Info("New L1 safe block", "l1_safe", x.L1Safe)
+		st.log.Info("New L1 safe block", "l1_safe", x.L1Safe, "prev_l1_safe", st.data.SafeL1)
 		st.metrics.RecordL1Ref("l1_safe", x.L1Safe)
 		st.data.SafeL1 = x.L1Safe
 	case finality.FinalizeL1Event:
-		st.log.Info("New L1 finalized block", "l1_finalized", x.FinalizedL1)
+		st.log.Info("New L1 finalized block", "l1_finalized", x.FinalizedL1, "prev_l1_finalized", st.data.FinalizedL1)
 		st.metrics.RecordL1Ref("l1_finalized", x.FinalizedL1)
 		st.data.FinalizedL1 = x.FinalizedL1
 		st.data.CurrentL1Finalized = x.FinalizedL1
