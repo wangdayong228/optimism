@@ -40,13 +40,15 @@ type L1OriginSelector struct {
 func NewL1OriginSelector(ctx context.Context, log log.Logger, cfg *rollup.Config, l1 L1Blocks) *L1OriginSelector {
 	// 创建带有前缀的logger
 	prefixedLog := log.New("component", "[OriginSelector]")
-	return &L1OriginSelector{
+	los := &L1OriginSelector{
 		ctx:  ctx,
 		log:  prefixedLog,
 		cfg:  cfg,
 		spec: rollup.NewChainSpec(cfg),
 		l1:   l1,
 	}
+	los.startBackgroundFetcher()
+	return los
 }
 
 func (los *L1OriginSelector) OnEvent(ev event.Event) bool {
@@ -218,9 +220,11 @@ func (los *L1OriginSelector) maybeSetNextOrigin(nextOrigin eth.L1BlockRef) {
 	defer los.mu.Unlock()
 
 	// Set the next origin if it is the immediate child of the current origin.
-	if nextOrigin.ParentHash == los.currentOrigin.Hash {
-		los.nextOrigin = nextOrigin
+	if nextOrigin.ParentHash != los.currentOrigin.Hash {
+		los.log.Warn("Next origin is not the immediate child of the current origin, but we still set next origin", "next_origin", nextOrigin.ID(), "next_origin_number", nextOrigin.Number)
 	}
+	los.nextOrigin = nextOrigin
+	los.log.Info("Setting next origin", "next_origin", nextOrigin.ID(), "next_origin_number", nextOrigin.Number)
 }
 
 func (los *L1OriginSelector) onForkchoiceUpdate(unsafeL2Head eth.L2BlockRef) {
@@ -280,4 +284,46 @@ func (los *L1OriginSelector) reset() {
 
 	los.currentOrigin = eth.L1BlockRef{}
 	los.nextOrigin = eth.L1BlockRef{}
+}
+
+// 在L1OriginSelector中添加
+func (los *L1OriginSelector) startBackgroundFetcher() {
+	go func() {
+		ticker := time.NewTicker(500 * time.Millisecond)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ticker.C:
+				los.batchFetchNextOrigins()
+			case <-los.ctx.Done():
+				return
+			}
+		}
+	}()
+}
+
+func (los *L1OriginSelector) batchFetchNextOrigins() {
+	ctx, cancel := context.WithTimeout(los.ctx, 500*time.Millisecond)
+	defer cancel()
+
+	los.mu.Lock()
+	currentOrigin := los.currentOrigin
+	los.mu.Unlock()
+
+	if currentOrigin == (eth.L1BlockRef{}) {
+		return
+	}
+
+	// 尝试获取多个区块
+	for i := uint64(1); i <= 5; i++ { // 一次尝试获取5个区块
+		_, err := los.fetch(ctx, currentOrigin.Number+i)
+		if err != nil {
+			if !errors.Is(err, ethereum.NotFound) {
+				los.log.Warn("Failed to batch fetch origin", "number", currentOrigin.Number+i, "err", err)
+			} else {
+				los.log.Info("No more L1 blocks to fetch", "number", currentOrigin.Number+i)
+			}
+			break
+		}
+	}
 }
