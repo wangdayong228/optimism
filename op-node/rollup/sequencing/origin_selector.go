@@ -38,9 +38,11 @@ type L1OriginSelector struct {
 }
 
 func NewL1OriginSelector(ctx context.Context, log log.Logger, cfg *rollup.Config, l1 L1Blocks) *L1OriginSelector {
+	// 创建带有前缀的logger
+	prefixedLog := log.New("component", "[OriginSelector]")
 	return &L1OriginSelector{
 		ctx:  ctx,
-		log:  log,
+		log:  prefixedLog,
 		cfg:  cfg,
 		spec: rollup.NewChainSpec(cfg),
 		l1:   l1,
