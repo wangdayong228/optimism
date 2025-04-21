@@ -28,7 +28,7 @@ const (
 // the rollup config.
 // From Fjord, the max sequencer drift for a given block timestamp should be learned via the
 // ChainSpec instead of reading the rollup configuration field directly.
-const maxSequencerDriftFjord = 180
+const maxSequencerDriftFjord = 1800
 
 type ForkName string
 

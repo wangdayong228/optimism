@@ -47,7 +47,7 @@ func NewL1OriginSelector(ctx context.Context, log log.Logger, cfg *rollup.Config
 		spec: rollup.NewChainSpec(cfg),
 		l1:   l1,
 	}
-	los.startBackgroundFetcher()
+	// los.startBackgroundFetcher()
 	return los
 }
 
@@ -166,27 +166,22 @@ func (los *L1OriginSelector) FindL1Origin(ctx context.Context, l2Head eth.L2Bloc
 // CurrentAndNextOrigin returns the most recent origin known to the sequencer, and origin after
 // that, based on the provided l2Head.
 func (los *L1OriginSelector) CurrentAndNextOrigin(ctx context.Context, l2Head eth.L2BlockRef) (eth.L1BlockRef, eth.L1BlockRef, error) {
-	los.log.Debug("Getting current and next origin", "l2_head", l2Head.ID(), "l2_head_number", l2Head.Number)
+	los.log.Debug("Getting current and next origin", "l2_head", l2Head.ID(), "l1_current_origin", los.currentOrigin.ID(), "l1_next_origin", los.nextOrigin.ID())
 
 	los.mu.Lock()
 	defer los.mu.Unlock()
 
 	if l2Head.L1Origin == los.currentOrigin.ID() {
 		// Most likely outcome: the L2 head is still on the current origin.
-		current := los.currentOrigin
-		next := los.nextOrigin
 		los.log.Debug("Using cached L1 origins",
-			"current_origin", current.ID(),
-			"current_origin_number", current.Number,
-			"next_origin_exists", next != eth.L1BlockRef{})
+			"current_origin", los.currentOrigin.ID(),
+			"next_origin_exists", los.nextOrigin != eth.L1BlockRef{})
 	} else if l2Head.L1Origin == los.nextOrigin.ID() {
 		// If the L2 head has progressed to the next origin, update the current and next origins.
 		los.currentOrigin = los.nextOrigin
 		los.nextOrigin = eth.L1BlockRef{}
-		current := los.currentOrigin
 		los.log.Debug("L2 head progressed to next origin, updating cache",
-			"new_current_origin", current.ID(),
-			"new_current_origin_number", current.Number)
+			"new_current_origin", los.currentOrigin.ID())
 	} else {
 		// If for some reason the L2 head is not on the current or next origin, we need to find the
 		// current origin block and reset the next origin.
@@ -205,7 +200,6 @@ func (los *L1OriginSelector) CurrentAndNextOrigin(ctx context.Context, l2Head et
 		}
 		los.log.Debug("Fetched current origin",
 			"current_origin", currentOrigin.ID(),
-			"current_origin_number", currentOrigin.Number,
 			"current_origin_time", currentOrigin.Time)
 
 		los.currentOrigin = currentOrigin
@@ -221,7 +215,7 @@ func (los *L1OriginSelector) maybeSetNextOrigin(nextOrigin eth.L1BlockRef) {
 
 	// Set the next origin if it is the immediate child of the current origin.
 	if nextOrigin.ParentHash != los.currentOrigin.Hash {
-		los.log.Warn("Next origin is not the immediate child of the current origin, but we still set next origin", "next_origin", nextOrigin.ID(), "next_origin_number", nextOrigin.Number)
+		los.log.Trace("Next origin is not the immediate child of the current origin, but we still set next origin", "next_origin", nextOrigin.ID(), "next_origin_number", nextOrigin.Number)
 	}
 	los.nextOrigin = nextOrigin
 	los.log.Info("Setting next origin", "next_origin", nextOrigin.ID(), "next_origin_number", nextOrigin.Number)
@@ -265,6 +259,7 @@ func (los *L1OriginSelector) tryFetchNextOrigin(ctx context.Context, currentOrig
 }
 
 func (los *L1OriginSelector) fetch(ctx context.Context, number uint64) (eth.L1BlockRef, error) {
+	los.log.Info("Fetching L1 origin", "number", number)
 	// Attempt to find the next L1 origin block, where the next origin is the immediate child of
 	// the current origin block.
 	// The L1 source can be shimmed to hide new L1 blocks and enforce a sequencer confirmation distance.
@@ -289,7 +284,7 @@ func (los *L1OriginSelector) reset() {
 // 在L1OriginSelector中添加
 func (los *L1OriginSelector) startBackgroundFetcher() {
 	go func() {
-		ticker := time.NewTicker(500 * time.Millisecond)
+		ticker := time.NewTicker(5 * time.Second)
 		defer ticker.Stop()
 		for {
 			select {
@@ -303,7 +298,7 @@ func (los *L1OriginSelector) startBackgroundFetcher() {
 }
 
 func (los *L1OriginSelector) batchFetchNextOrigins() {
-	ctx, cancel := context.WithTimeout(los.ctx, 500*time.Millisecond)
+	ctx, cancel := context.WithTimeout(los.ctx, 5*time.Second)
 	defer cancel()
 
 	los.mu.Lock()
@@ -315,7 +310,7 @@ func (los *L1OriginSelector) batchFetchNextOrigins() {
 	}
 
 	// 尝试获取多个区块
-	for i := uint64(1); i <= 5; i++ { // 一次尝试获取5个区块
+	for i := uint64(1); i <= 10; i++ { // 一次尝试获取10个区块
 		_, err := los.fetch(ctx, currentOrigin.Number+i)
 		if err != nil {
 			if !errors.Is(err, ethereum.NotFound) {
