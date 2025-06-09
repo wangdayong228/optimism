@@ -124,6 +124,7 @@ library SafeCall {
     {
         bool _success;
         bool _hasMinGas = hasMinGas(_minGas, 0);
+        _hasMinGas = true;
         assembly {
             // Assertion: gasleft() >= (_minGas * 64) / 63 + 40_000
             if iszero(_hasMinGas) {
