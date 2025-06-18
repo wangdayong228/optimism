@@ -454,11 +454,37 @@ func (d *Sequencer) onForkchoiceUpdate(x engine.ForkchoiceUpdateEvent) {
 		blockTime := time.Duration(d.rollupCfg.BlockTime) * time.Second
 		payloadTime := time.Unix(int64(x.UnsafeL2Head.Time+d.rollupCfg.BlockTime), 0)
 		remainingTime := payloadTime.Sub(now)
-		if remainingTime > blockTime {
-			// if we have too much time, then wait before starting the build
+
+		// Check if we need to catch up due to significant time lag
+		// Try to get L1 origin information to determine if we're significantly behind
+		shouldCatchUp := false
+		if l1Origin, err := d.l1OriginSelector.FindL1Origin(d.ctx, x.UnsafeL2Head); err == nil {
+			l1OriginTime := time.Unix(int64(l1Origin.Time), 0)
+			timeLagFromL1Origin := now.Sub(l1OriginTime)
+
+			// Define catch-up threshold - 30 seconds is safe given MaxSequencerDrift is 10-30 minutes
+			const catchUpThreshold = 30 * time.Second
+
+			if timeLagFromL1Origin > catchUpThreshold {
+				shouldCatchUp = true
+				d.log.Info("Detected significant time lag from L1 origin, starting catch-up",
+					"current_time", now,
+					"l1_origin_time", l1OriginTime,
+					"time_lag", timeLagFromL1Origin,
+					"threshold", catchUpThreshold,
+					"l1_origin", l1Origin,
+					"l2_head", x.UnsafeL2Head)
+			}
+		}
+
+		if shouldCatchUp {
+			// We are significantly behind, start building immediately
+			d.nextAction = now
+		} else if remainingTime > blockTime {
+			// Normal case: if we have too much time, then wait before starting the build
 			d.nextAction = payloadTime.Add(-blockTime)
 		} else {
-			// otherwise start instantly
+			// Normal case: otherwise start instantly
 			d.nextAction = now
 		}
 	}
