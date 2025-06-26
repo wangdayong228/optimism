@@ -275,7 +275,7 @@ require (
 )
 
 // replace github.com/ethereum/go-ethereum => github.com/ethereum-optimism/op-geth v1.101503.2-rc.1
-replace github.com/ethereum/go-ethereum => github.com/wangdayong228/op-geth v0.0.0-20250326091525-81eacf6fc983
+replace github.com/ethereum/go-ethereum => github.com/wangdayong228/op-geth v0.0.0-20250618072057-3d4a39c7dcc8
 
 // https://github.com/wangdayong228/op-geth.git
 

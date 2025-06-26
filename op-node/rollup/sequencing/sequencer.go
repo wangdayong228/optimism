@@ -225,6 +225,15 @@ func (d *Sequencer) onBuildStarted(x engine.BuildStartedEvent) {
 
 	// schedule sealing
 	now := d.timeNow()
+
+	// // 检查是否处于 catch-up 模式
+	// // 只有当 nextAction 不是零值且已经设置为立即执行（catch-up）时，才不重新计算时间
+	// if !d.nextAction.IsZero() && (d.nextAction.Equal(now) || d.nextAction.Before(now)) {
+	// 	d.log.Debug("Preserving catch-up mode, not recalculating wait time",
+	// 		"current_nextAction", d.nextAction, "now", now)
+	// 	return
+	// }
+
 	payloadTime := time.Unix(int64(x.Parent.Time+d.rollupCfg.BlockTime), 0)
 	remainingTime := payloadTime.Sub(now)
 	if remainingTime < sealingDuration {
@@ -463,7 +472,7 @@ func (d *Sequencer) onForkchoiceUpdate(x engine.ForkchoiceUpdateEvent) {
 			timeLagFromL1Origin := now.Sub(l1OriginTime)
 
 			// Define catch-up threshold - 30 seconds is safe given MaxSequencerDrift is 10-30 minutes
-			const catchUpThreshold = 30 * time.Second
+			const catchUpThreshold = 300 * time.Second
 
 			if timeLagFromL1Origin > catchUpThreshold {
 				shouldCatchUp = true

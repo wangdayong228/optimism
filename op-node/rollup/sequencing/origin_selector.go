@@ -130,7 +130,7 @@ func (los *L1OriginSelector) FindL1Origin(ctx context.Context, l2Head eth.L2Bloc
 
 	if nextOrigin == (eth.L1BlockRef{}) {
 		los.log.Info("Next origin not set, fetching it now", "current_origin_number", currentOrigin.Number)
-		fetchCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+		fetchCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
 		defer cancel()
 
 		// If the next origin is not set, we need to fetch it now.

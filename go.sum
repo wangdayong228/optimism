@@ -864,8 +864,8 @@ github.com/valyala/fasttemplate v1.0.1/go.mod h1:UQGH1tvbgY+Nz5t2n7tXsz52dQxojPU
 github.com/valyala/fasttemplate v1.2.1/go.mod h1:KHLXt3tVN2HBp8eijSv/kGJopbvo7S+qRAEEKiv+SiQ=
 github.com/viant/assertly v0.4.8/go.mod h1:aGifi++jvCrUaklKEKT0BU95igDNaqkvz+49uaYMPRU=
 github.com/viant/toolbox v0.24.0/go.mod h1:OxMCG57V0PXuIP2HNQrtJf2CjqdmbrOx5EkMILuUhzM=
-github.com/wangdayong228/op-geth v0.0.0-20250326091525-81eacf6fc983 h1:dflxUyX9ilkVs7udxl04Tz5e/Yfln5tpCgnveW8hItE=
-github.com/wangdayong228/op-geth v0.0.0-20250326091525-81eacf6fc983/go.mod h1:QUo3fn+45vWqJWzJW+rIzRHUV7NmhhHLPdI87mAn1M8=
+github.com/wangdayong228/op-geth v0.0.0-20250618072057-3d4a39c7dcc8 h1:9+bwgRjMFfRQfmkLfFbRX9/h8kpB8EP3zde83ClxPNY=
+github.com/wangdayong228/op-geth v0.0.0-20250618072057-3d4a39c7dcc8/go.mod h1:QUo3fn+45vWqJWzJW+rIzRHUV7NmhhHLPdI87mAn1M8=
 github.com/wlynxg/anet v0.0.3/go.mod h1:eay5PRQr7fIVAMbTbchTnO9gG65Hg/uYGdc7mguHxoA=
 github.com/wlynxg/anet v0.0.4 h1:0de1OFQxnNqAu+x2FAKKCVIrnfGKQbs7FQz++tB0+Uw=
 github.com/wlynxg/anet v0.0.4/go.mod h1:eay5PRQr7fIVAMbTbchTnO9gG65Hg/uYGdc7mguHxoA=
