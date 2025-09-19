@@ -890,13 +890,19 @@ type TxSender[T any] interface {
 // sendTx uses the txmgr queue to send the given transaction candidate after setting its
 // gaslimit. It will block if the txmgr queue has reached its MaxPendingTransactions limit.
 func (l *BatchSubmitter) sendTx(txdata txData, isCancel bool, candidate *txmgr.TxCandidate, queue TxSender[txRef], receiptsCh chan txmgr.TxReceipt[txRef]) {
-	floorDataGas, err := core.FloorDataGas(candidate.TxData)
-	if err != nil {
-		// We log instead of return an error here because the txmgr will do its own gas estimation.
-		l.Log.Warn("Failed to calculate floor data gas", "err", err)
-	} else {
-		candidate.GasLimit = floorDataGas
+	// 跳过计算 floor data gas，由于 conflux 主网gas 计算与 floordatagas 没有关系，所以跳过，在后面 craftTx 中会estimate
+	// 即使 floordatagas 修改为 2 倍，也依然会失败。
+	useFloorDataGas := false
+	if useFloorDataGas {
+		floorDataGas, err := core.FloorDataGas(candidate.TxData)
+		if err != nil {
+			// We log instead of return an error here because the txmgr will do its own gas estimation.
+			l.Log.Warn("Failed to calculate floor data gas", "err", err)
+		} else {
+			candidate.GasLimit = floorDataGas
+		}
 	}
+	l.Log.Info("[BatchSubmitter] sendTx", "to", candidate.To, "gas limit", candidate.GasLimit)
 
 	queue.Send(txRef{id: txdata.ID(), isCancel: isCancel, isBlob: txdata.asBlob}, *candidate, receiptsCh)
 }

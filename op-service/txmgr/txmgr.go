@@ -382,8 +382,10 @@ func (m *SimpleTxManager) craftTx(ctx context.Context, candidate TxCandidate) (*
 			return nil, fmt.Errorf("failed to estimate gas: %w", errutil.TryAddRevertReason(err))
 		}
 		gasLimit = gas
+		m.l.Info("[SimpleTxManager] craftTx: set gas limit to estimated gas", "to", candidate.To, "gas limit", gasLimit)
 	} else {
 		callMsg.Gas = gasLimit
+		m.l.Info("[SimpleTxManager] craftTx: call with non-estimated gas limit", "to", candidate.To, "gas limit", callMsg.Gas)
 		_, err := m.backend.CallContract(ctx, callMsg, nil)
 		if err != nil {
 			return nil, fmt.Errorf("failed to call: %w", errutil.TryAddRevertReason(err))
