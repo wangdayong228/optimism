@@ -1,29 +1,78 @@
 {
-    // 使用 IntelliSense 了解相关属性。
-    // 悬停以查看现有属性的描述。
-    // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
-    "version": "0.2.0",
-    "configurations": [
+  // 使用 IntelliSense 了解相关属性。
+  // 悬停以查看现有属性的描述。
+  // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Connect to server",
+      "type": "go",
+      "request": "attach",
+      "mode": "remote",
+      "remotePath": "/app",
+      "port": 2345,
+      "host": "127.0.0.1",
+      // 添加以下配置
+      "trace": "verbose",
+      "showLog": true,
+      "apiVersion": 2,
+      // 添加以下配置
+      "substitutePath": [
         {
-            "name": "Connect to server",
-            "type": "go",
-            "request": "attach",
-            "mode": "remote",
-            "remotePath": "/app",
-            "port": 2345,
-            "host": "127.0.0.1",
-            // 添加以下配置
-            "trace": "verbose",
-            "showLog": true,
-            "apiVersion": 2,
-            // 添加以下配置
-            "substitutePath": [
-                {
-                    "from": "/Users/dayong/myspace/mywork/op/optimism",
-                    "to": "/app"
-                }
-            ],
-            "stopOnEntry": false
+          "from": "/Users/dayong/myspace/mywork/op/optimism",
+          "to": "/app"
         }
-    ]
+      ],
+      "stopOnEntry": false
+    },
+    {
+      "name": "Launch file",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${file}",
+      "cwd": "${fileDirname}",
+      "env": {},
+      "args": [
+        "--l2-eth-rpc=https://op-cfx-test-grafana.yidaiyilu0.site/l2rpc",
+        "--rollup-rpc=https://op-cfx-test-grafana.yidaiyilu0.site/l2clrpc",
+        "--poll-interval=1s",
+        "--sub-safety-margin=6",
+        "--num-confirmations=1",
+        "--safe-abort-nonce-too-low-count=3",
+        "--resubmission-timeout=30s",
+        "--rpc.addr=0.0.0.0",
+        "--rpc.port=8548",
+        "--rpc.enable-admin",
+        "--max-channel-duration=1",
+        "--l1-eth-rpc=https://cfx-testnet-rpc-proxy.yidaiyilu0.site",
+        "--private-key=0xb3d2d558e3491a3709b7c451100a0366b5872520c7aa020c17a0e7fa35b6a8df",
+        "--altda.enabled=False",
+        "--metrics.enabled",
+        "--metrics.addr=0.0.0.0",
+        "--metrics.port=9001",
+        "--data-availability-type=calldata",
+        "--log.level=debug"
+      ]
+      //-l2-eth-rpc=$opc_l2_rpc \
+      // --rollup-rpc=$opc_l2_cl_rpc \
+      // --poll-interval=1s \
+      // --sub-safety-margin=6 \
+      // --num-confirmations=1 \
+      // --safe-abort-nonce-too-low-count=3 \
+      // --resubmission-timeout=30s \
+      // --rpc.addr=0.0.0.0 \
+      // --rpc.port=8548 \
+      // --rpc.enable-admin \
+      // --max-channel-duration=1 \
+      // --l1-eth-rpc=$opc_l1_rpc \
+      // --private-key=0xb3d2d558e3491a3709b7c451100a0366b5872520c7aa020c17a0e7fa35b6a8df \
+      // --altda.enabled=False \
+      // --metrics.enabled \
+      // --metrics.addr=0.0.0.0 \
+      // --metrics.port=9001 \
+      // --data-availability-type=calldata \
+      // --max-l1-tx-size-bytes=500 # 该 option 用于绕过 l1 gas 没有对齐的问题，目前可以去掉
+    }
+  ]
 }
