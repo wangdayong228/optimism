@@ -292,7 +292,7 @@ func (l *L2OutputSubmitter) FetchDGFOutput(ctx context.Context) (source.Proposal
 		return source.Proposal{}, false, nil
 	}
 
-	l.Log.Info("No proposals found for at least proposal interval, submitting proposal now", "proposalInterval", l.Cfg.ProposalInterval)
+	l.Log.Info("No proposals found for at least proposal interval, submitting proposal now", "last_proposed_root", claim, "current_output_root", output.Root, "proposalInterval", l.Cfg.ProposalInterval)
 
 	return output, true, nil
 }
@@ -452,6 +452,7 @@ func (l *L2OutputSubmitter) loop() {
 				continue
 			}
 
+			l.Log.Info("Proposing output", "is_dfg_nil?", l.dgfContract == nil, "output", proposal.Root, "block", proposal.SequenceNum, "reason", "proposal interval elapsed and output ready")
 			l.proposeOutput(ctx, proposal)
 		case <-l.done:
 			return

@@ -67,7 +67,7 @@ func (ba *FetchingAttributesBuilder) PreparePayloadAttributes(ctx context.Contex
 	if l2Parent.L1Origin.Number != epoch.Number {
 		info, receipts, err := ba.l1.FetchReceipts(ctx, epoch.Hash)
 		if err != nil {
-			return nil, NewTemporaryError(fmt.Errorf("failed to fetch L1 block info and receipts: %w", err))
+			return nil, NewTemporaryError(fmt.Errorf("failed to fetch L1 block info and receipts, block %s[%d] : %w", epoch.Hash, epoch.Number, err))
 		}
 		if l2Parent.L1Origin.Hash != info.ParentHash() {
 			fmt.Printf("cannot create new block with L1 origin %s (parent %s) on top of L1 origin %s; but skip now\n",
