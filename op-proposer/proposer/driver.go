@@ -292,7 +292,7 @@ func (l *L2OutputSubmitter) FetchDGFOutput(ctx context.Context) (source.Proposal
 		return source.Proposal{}, false, nil
 	}
 
-	l.Log.Info("No proposals found for at least proposal interval, submitting proposal now", "last_proposed_root", claim, "current_output_root", output.Root, "proposalInterval", l.Cfg.ProposalInterval)
+	l.Log.Info("No proposals found for at least proposal interval, submitting proposal now", "current_block_number", currentBlockNumber, "current_output_root", output.Root, "last_proposed_root", claim, "proposalInterval", l.Cfg.ProposalInterval)
 
 	return output, true, nil
 }

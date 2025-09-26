@@ -79,9 +79,10 @@ func (f *DisputeGameFactory) HasProposedSince(ctx context.Context, proposer comm
 		if err != nil {
 			return false, time.Time{}, common.Hash{}, fmt.Errorf("failed to get dispute game %d: %w", idx, err)
 		}
+		// Note: 解决 DisputeGameAlreadyExists 问题，当 cutoff 之前已经创建了 game，也需要返回 claim 信息，上层需要据此判断是否需要再创建 game
 		if game.Timestamp.Before(cutoff) {
 			// Reached a game that is before the expected cutoff, so we haven't found a suitable proposal
-			return false, time.Time{}, common.Hash{}, nil
+			return false, game.Timestamp, game.Claim, nil
 		}
 		if game.GameType == gameType && game.Proposer == proposer {
 			// Found a matching proposal
