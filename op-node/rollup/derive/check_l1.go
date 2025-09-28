@@ -21,9 +21,9 @@ func VerifyNewL1Origin(ctx context.Context, unsafeOrigin eth.L1BlockRef, l1 L1Bl
 	}
 	// Avoid requesting an older block by checking against the parent hash
 	if newOrigin.Number == unsafeOrigin.Number+1 && newOrigin.ParentHash != unsafeOrigin.Hash {
-		fmt.Printf("l2 unsafe head origin is no longer canonical, need reset to resolve: canonical hash: %v; unsafe origin hash: %v. but skip now\n", newOrigin.ParentHash, unsafeOrigin.Hash)
-		// return NewResetError(fmt.Errorf("l2 unsafe head origin is no longer canonical, need reset to resolve: canonical hash: %v; unsafe origin hash: %v",
-		// 	newOrigin.ParentHash, unsafeOrigin.Hash))
+		// fmt.Printf("l2 unsafe head origin is no longer canonical, need reset to resolve: canonical hash: %v; unsafe origin hash: %v. but skip now\n", newOrigin.ParentHash, unsafeOrigin.Hash)
+		return NewResetError(fmt.Errorf("[BlockHash Issue] l2 unsafe head origin is no longer canonical, need reset to resolve: canonical hash: %v; unsafe origin hash: %v",
+			newOrigin.ParentHash, unsafeOrigin.Hash))
 	}
 	if newOrigin.Number > unsafeOrigin.Number+1 {
 		// If unsafe origin is further behind new origin, check it's still on the canonical chain.

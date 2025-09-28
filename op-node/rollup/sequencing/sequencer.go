@@ -534,11 +534,11 @@ func (d *Sequencer) startBuildingBlock() {
 	}
 
 	if !(l2Head.L1Origin.Hash == l1Origin.ParentHash || l2Head.L1Origin.Hash == l1Origin.Hash) {
-		fmt.Printf("l2 unsafe head origin is no longer canonical, need reset to resolve: canonical: %v; unsafe origin: %v; but skip now\n", l2Head.L1Origin, l1Origin)
-		// d.metrics.RecordSequencerInconsistentL1Origin(l2Head.L1Origin, l1Origin.ID())
-		// d.emitter.Emit(rollup.ResetEvent{Err: fmt.Errorf("cannot build new L2 block with L1 origin %s (parent L1 %s) on current L2 head %s with L1 origin %s",
-		// 	l1Origin, l1Origin.ParentHash, l2Head, l2Head.L1Origin)})
-		// return
+		// fmt.Printf("l2 unsafe head origin is no longer canonical, need reset to resolve: canonical: %v; unsafe origin: %v; but skip now\n", l2Head.L1Origin, l1Origin)
+		d.metrics.RecordSequencerInconsistentL1Origin(l2Head.L1Origin, l1Origin.ID())
+		d.emitter.Emit(rollup.ResetEvent{Err: fmt.Errorf(" [BlockHash Issue] cannot build new L2 block with L1 origin %s (parent L1 %s) on current L2 head %s with L1 origin %s",
+			l1Origin, l1Origin.ParentHash, l2Head, l2Head.L1Origin)})
+		return
 	}
 
 	d.log.Info("Started sequencing new block", "parent", l2Head, "l1Origin", l1Origin)

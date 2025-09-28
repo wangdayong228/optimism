@@ -70,11 +70,11 @@ func (ba *FetchingAttributesBuilder) PreparePayloadAttributes(ctx context.Contex
 			return nil, NewTemporaryError(fmt.Errorf("failed to fetch L1 block info and receipts, block %s[%d] : %w", epoch.Hash, epoch.Number, err))
 		}
 		if l2Parent.L1Origin.Hash != info.ParentHash() {
-			fmt.Printf("cannot create new block with L1 origin %s (parent %s) on top of L1 origin %s; but skip now\n",
-				epoch, info.ParentHash(), l2Parent.L1Origin)
-			// return nil, NewResetError(
-			// 	fmt.Errorf("cannot create new block with L1 origin %s (parent %s) on top of L1 origin %s",
-			// 		epoch, info.ParentHash(), l2Parent.L1Origin))
+			// fmt.Printf("cannot create new block with L1 origin %s (parent %s) on top of L1 origin %s; but skip now\n",
+			// 	epoch, info.ParentHash(), l2Parent.L1Origin)
+			return nil, NewResetError(
+				fmt.Errorf("[BlockHash Issue] cannot create new block with L1 origin %s (parent %s) on top of L1 origin %s",
+					epoch, info.ParentHash(), l2Parent.L1Origin))
 		}
 
 		deposits, err := DeriveDeposits(receipts, ba.rollupCfg.DepositContractAddress)
@@ -92,8 +92,8 @@ func (ba *FetchingAttributesBuilder) PreparePayloadAttributes(ctx context.Contex
 		seqNumber = 0
 	} else {
 		if l2Parent.L1Origin.Hash != epoch.Hash {
-			fmt.Printf("cannot create new block with L1 origin %s in conflict with L1 origin %s; but skip now\n", epoch, l2Parent.L1Origin)
-			// return nil, NewResetError(fmt.Errorf("cannot create new block with L1 origin %s in conflict with L1 origin %s", epoch, l2Parent.L1Origin))
+			// fmt.Printf("cannot create new block with L1 origin %s in conflict with L1 origin %s; but skip now\n", epoch, l2Parent.L1Origin)
+			return nil, NewResetError(fmt.Errorf("[BlockHash Issue] cannot create new block with L1 origin %s in conflict with L1 origin %s", epoch, l2Parent.L1Origin))
 		}
 		info, err := ba.l1.InfoByHash(ctx, epoch.Hash)
 		if err != nil {

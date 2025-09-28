@@ -67,8 +67,8 @@ func (l1t *L1Traversal) AdvanceL1Block(ctx context.Context) error {
 		return NewTemporaryError(fmt.Errorf("failed to find L1 block info by number, at origin %s next %d: %w", origin, origin.Number+1, err))
 	}
 	if l1t.block.Hash != nextL1Origin.ParentHash {
-		l1t.log.Warn("detected L1 reorg from %s to %s with conflicting parent %s, but skip now", l1t.block, nextL1Origin, nextL1Origin.ParentID())
-		// return NewResetError(fmt.Errorf("detected L1 reorg from %s to %s with conflicting parent %s", l1t.block, nextL1Origin, nextL1Origin.ParentID()))
+		// l1t.log.Warn("detected L1 reorg from %s to %s with conflicting parent %s, but skip now", l1t.block, nextL1Origin, nextL1Origin.ParentID())
+		return NewResetError(fmt.Errorf("[BlockHash Issue] detected L1 reorg from %s to %s with conflicting parent %s", l1t.block, nextL1Origin, nextL1Origin.ParentID()))
 	}
 
 	// Parse L1 receipts of the given block and update the L1 system configuration
