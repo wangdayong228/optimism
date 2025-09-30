@@ -159,37 +159,50 @@ func (d *Sequencer) OnEvent(ev event.Event) bool {
 	preOk := d.nextActionOK
 	defer func() {
 		if d.nextActionOK != preOk || d.nextAction != preTime {
-			d.log.Debug("Sequencer action schedule changed",
+			d.log.Debug("[Sequencer] action schedule changed",
 				"time", d.nextAction, "wait", d.nextAction.Sub(d.timeNow()), "ok", d.nextActionOK, "event", ev)
 		}
 	}()
 
 	switch x := ev.(type) {
 	case engine.BuildStartedEvent:
+		d.log.Debug("[Sequencer] received BuildStartedEvent")
 		d.onBuildStarted(x)
 	case engine.InvalidPayloadAttributesEvent:
+		d.log.Debug("[Sequencer] received InvalidPayloadAttributesEvent")
 		d.onInvalidPayloadAttributes(x)
 	case engine.BuildSealedEvent:
+		d.log.Debug("[Sequencer] received BuildSealedEvent")
 		d.onBuildSealed(x)
 	case engine.PayloadSealInvalidEvent:
+		d.log.Debug("[Sequencer] received PayloadSealInvalidEvent")
 		d.onPayloadSealInvalid(x)
 	case engine.PayloadSealExpiredErrorEvent:
+		d.log.Debug("[Sequencer] received PayloadSealExpiredErrorEvent")
 		d.onPayloadSealExpiredError(x)
 	case engine.PayloadInvalidEvent:
+		d.log.Debug("[Sequencer] received PayloadInvalidEvent")
 		d.onPayloadInvalid(x)
 	case engine.PayloadSuccessEvent:
+		d.log.Debug("[Sequencer] received PayloadSuccessEvent")
 		d.onPayloadSuccess(x)
 	case SequencerActionEvent:
+		d.log.Debug("[Sequencer] received SequencerActionEvent")
 		d.onSequencerAction(x)
 	case rollup.EngineTemporaryErrorEvent:
+		d.log.Debug("[Sequencer] received EngineTemporaryErrorEvent")
 		d.onEngineTemporaryError(x)
 	case rollup.ResetEvent:
+		d.log.Debug("[Sequencer] received ResetEvent")
 		d.onReset(x)
 	case engine.EngineResetConfirmedEvent:
+		d.log.Debug("[Sequencer] received EngineResetConfirmedEvent")
 		d.onEngineResetConfirmedEvent(x)
 	case engine.ForkchoiceUpdateEvent:
+		d.log.Debug("[Sequencer] received ForkchoiceUpdateEvent")
 		d.onForkchoiceUpdate(x)
 	default:
+		d.log.Debug("[Sequencer] received unknown event", "event", ev)
 		return false
 	}
 	return true

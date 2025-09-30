@@ -3,6 +3,7 @@ package event
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"slices"
 	"sync"
 	"sync/atomic"
@@ -121,6 +122,7 @@ func NewSystem(log log.Logger, ex Executor) *Sys {
 }
 
 func (s *Sys) Register(name string, deriver Deriver, opts *RegisterOpts) Emitter {
+	s.log.Debug("[Sys] Registering", "name", name, "deriver type", reflect.TypeOf(deriver), "opts", opts)
 	s.regsLock.Lock()
 	defer s.regsLock.Unlock()
 
@@ -266,4 +268,5 @@ func (s *Sys) emit(name string, derivContext uint64, ev Event) {
 		s.log.Error("Failed to enqueue event", "emitter", name, "event", ev, "context", derivContext)
 		return
 	}
+	s.log.Debug("[Sys] Emitted event", "name", name, "derivContext", derivContext, "ev", ev)
 }

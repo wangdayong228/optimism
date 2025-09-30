@@ -145,8 +145,8 @@ func (s *Driver) OnUnsafeL2Payload(ctx context.Context, envelope *eth.ExecutionP
 // the eventLoop responds to L1 changes and internal timers to produce L2 blocks.
 func (s *Driver) eventLoop() {
 	defer s.wg.Done()
-	s.log.Info("State loop started")
-	defer s.log.Info("State loop returned")
+	s.log.Info("[Driver] State loop started")
+	defer s.log.Info("[Driver] State loop returned")
 
 	defer s.driverCancel()
 
@@ -170,7 +170,7 @@ func (s *Driver) eventLoop() {
 		nextAction, ok := s.sequencer.NextAction()
 		if !ok {
 			if sequencerCh != nil {
-				s.log.Info("Sequencer paused until new events")
+				s.log.Info("[Driver] Sequencer paused until new events")
 			}
 			sequencerCh = nil
 			return
@@ -185,7 +185,7 @@ func (s *Driver) eventLoop() {
 			<-sequencerCh
 		}
 		delta := time.Until(nextAction)
-		s.log.Info("Scheduled sequencer action", "delta", delta)
+		s.log.Info("[Driver] Scheduled sequencer action", "delta", delta)
 		sequencerTimer.Reset(delta)
 	}
 
@@ -210,9 +210,11 @@ func (s *Driver) eventLoop() {
 				}
 				s.log.Error("unexpected error from event-draining", "err", err)
 			}
+			s.log.Debug("[Driver] Event drained")
 		}
 
 		planSequencerAction()
+		s.log.Debug("[Driver] Planned sequencer action")
 
 		// If the engine is not ready, or if the L2 head is actively changing, then reset the alt-sync:
 		// there is no need to request L2 blocks when we are syncing already.
@@ -223,8 +225,10 @@ func (s *Driver) eventLoop() {
 
 		select {
 		case <-sequencerCh:
+			s.log.Debug("[Driver] Received sequencerCh")
 			s.Emitter.Emit(sequencing.SequencerActionEvent{})
 		case <-altSyncTicker.C:
+			s.log.Debug("[Driver] Received altSyncTicker.C")
 			// Check if there is a gap in the current unsafe payload queue.
 			ctx, cancel := context.WithTimeout(s.driverCtx, time.Second*2)
 			err := s.checkForGapInUnsafeQueue(ctx)
@@ -233,6 +237,7 @@ func (s *Driver) eventLoop() {
 				s.log.Warn("failed to check for unsafe L2 blocks to sync", "err", err)
 			}
 		case envelope := <-s.unsafeL2Payloads:
+			s.log.Debug("[Driver] Received unsafeL2Payloads")
 			// If we are doing CL sync or done with engine syncing, fallback to the unsafe payload queue & CL P2P sync.
 			if s.SyncCfg.SyncMode == sync.CLSync || !s.Engine.IsEngineSyncing() {
 				s.log.Info("Optimistically queueing unsafe L2 execution payload", "id", envelope.ExecutionPayload.ID())
@@ -254,29 +259,33 @@ func (s *Driver) eventLoop() {
 				}
 			}
 		case newL1Head := <-s.l1HeadSig:
-			s.log.Debug("Driver received new L1 head signal", "l1_head", newL1Head)
+			s.log.Debug("[Driver] received new L1 head signal", "l1_head", newL1Head)
 			s.Emitter.Emit(status.L1UnsafeEvent{L1Unsafe: newL1Head})
 			reqStep() // a new L1 head may mean we have the data to not get an EOF again.
 		case newL1Safe := <-s.l1SafeSig:
-			s.log.Debug("Driver received new L1 safe signal", "l1_safe", newL1Safe)
+			s.log.Debug("[Driver] received new L1 safe signal", "l1_safe", newL1Safe)
 			s.Emitter.Emit(status.L1SafeEvent{L1Safe: newL1Safe})
 			// no step, justified L1 information does not do anything for L2 derivation or status
 		case newL1Finalized := <-s.l1FinalizedSig:
-			s.log.Debug("Driver received new L1 finalized signal", "l1_finalized", newL1Finalized)
+			s.log.Debug("[Driver] received new L1 finalized signal", "l1_finalized", newL1Finalized)
 			s.emitter.Emit(finality.FinalizeL1Event{FinalizedL1: newL1Finalized})
 			reqStep() // we may be able to mark more L2 data as finalized now
 		case <-s.sched.NextDelayedStep():
+			s.log.Debug("[Driver] received next delayed step")
 			s.emitter.Emit(StepAttemptEvent{})
 		case <-s.sched.NextStep():
+			s.log.Debug("[Driver] received next step")
 			s.emitter.Emit(StepAttemptEvent{})
 		case respCh := <-s.stateReq:
+			s.log.Debug("[Driver] received stateReq")
 			respCh <- struct{}{}
 		case respCh := <-s.forceReset:
-			s.log.Warn("Derivation pipeline is manually reset")
+			s.log.Warn("[Driver] Derivation pipeline is manually reset")
 			s.Derivation.Reset()
 			s.metrics.RecordPipelineReset()
 			close(respCh)
 		case <-s.driverCtx.Done():
+			s.log.Debug("[Driver] received driverCtx.Done")
 			return
 		}
 	}
