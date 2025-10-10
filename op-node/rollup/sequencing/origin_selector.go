@@ -69,26 +69,29 @@ func (los *L1OriginSelector) OnEvent(ev event.Event) bool {
 func (los *L1OriginSelector) FindL1Origin(ctx context.Context, l2Head eth.L2BlockRef) (eth.L1BlockRef, error) {
 	currentOrigin, nextOrigin, err := los.CurrentAndNextOrigin(ctx, l2Head)
 	if err != nil {
-		los.log.Error("Failed to get current and next L1 origin", "err", err, "l2_head", l2Head)
+		los.log.Error("[L1OriginSelector] Failed to get current and next L1 origin", "err", err, "l2_head", l2Head)
 		return eth.L1BlockRef{}, err
 	}
 
-	los.log.Info("Finding L1 origin for L2 block",
+	los.log.Info("[L1OriginSelector] Finding L1 origin for L2 block",
 		"l2_head", l2Head.ID(),
 		"l2_head_number", l2Head.Number,
 		"l2_head_time", l2Head.Time,
 		"current_origin", currentOrigin.ID(),
 		"current_origin_number", currentOrigin.Number,
 		"current_origin_time", currentOrigin.Time,
+		"next_origin", nextOrigin.ID(),
+		"next_origin_number", nextOrigin.Number,
+		"next_origin_time", nextOrigin.Time,
 		"next_origin_exists", nextOrigin != eth.L1BlockRef{},
 		"next_l2_time", l2Head.Time+los.cfg.BlockTime)
 
-	if nextOrigin != (eth.L1BlockRef{}) {
-		los.log.Info("Next origin details",
-			"next_origin", nextOrigin.ID(),
-			"next_origin_number", nextOrigin.Number,
-			"next_origin_time", nextOrigin.Time)
-	}
+	// if nextOrigin != (eth.L1BlockRef{}) {
+	// 	los.log.Info("[L1OriginSelector] Next origin details",
+	// 		"next_origin", nextOrigin.ID(),
+	// 		"next_origin_number", nextOrigin.Number,
+	// 		"next_origin_time", nextOrigin.Time)
+	// }
 
 	// If the next L2 block time is greater than the next origin block's time, we can choose to
 	// start building on top of the next origin. Sequencer implementation has some leeway here and
@@ -96,7 +99,7 @@ func (los *L1OriginSelector) FindL1Origin(ctx context.Context, l2Head eth.L2Bloc
 	// of slack. For simplicity, we implement our Sequencer to always start building on the latest
 	// L1 block when we can.
 	if nextOrigin != (eth.L1BlockRef{}) && l2Head.Time+los.cfg.BlockTime >= nextOrigin.Time {
-		los.log.Info("Using next origin for L2 block",
+		los.log.Info("[L1OriginSelector] Using next origin for L2 block",
 			"next_origin", nextOrigin.ID(),
 			"next_origin_number", nextOrigin.Number,
 			"l2_time", l2Head.Time+los.cfg.BlockTime,
@@ -110,7 +113,7 @@ func (los *L1OriginSelector) FindL1Origin(ctx context.Context, l2Head eth.L2Bloc
 
 	pastSeqDrift := l2Head.Time+los.cfg.BlockTime-currentOrigin.Time > msd
 
-	los.log.Info("Max sequencer drift check",
+	los.log.Info("[L1OriginSelector] Max sequencer drift check",
 		"current_origin_time", currentOrigin.Time,
 		"next_l2_time", l2Head.Time+los.cfg.BlockTime,
 		"max_seq_drift", msd,
@@ -119,30 +122,30 @@ func (los *L1OriginSelector) FindL1Origin(ctx context.Context, l2Head eth.L2Bloc
 
 	// If we are not past the max sequencer drift, we can just return the current origin.
 	if !pastSeqDrift {
-		los.log.Info("Using current origin for L2 block (within max sequencer drift)",
+		los.log.Info("[L1OriginSelector] Using current origin for L2 block (within max sequencer drift)",
 			"current_origin", currentOrigin.ID(),
 			"current_origin_number", currentOrigin.Number)
 		return currentOrigin, nil
 	}
 
 	// Otherwise, we need to find the next L1 origin block in order to continue producing blocks.
-	log.Warn("Next L2 block time is past the sequencer drift + current origin time")
+	log.Warn("[L1OriginSelector] Next L2 block time is past the sequencer drift + current origin time")
 
 	if nextOrigin == (eth.L1BlockRef{}) {
-		los.log.Info("Next origin not set, fetching it now", "current_origin_number", currentOrigin.Number)
+		los.log.Info("[L1OriginSelector] Next origin not set, fetching it now", "current_origin_number", currentOrigin.Number)
 		fetchCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
 		defer cancel()
 
 		// If the next origin is not set, we need to fetch it now.
 		nextOrigin, err = los.fetch(fetchCtx, currentOrigin.Number+1)
 		if err != nil {
-			los.log.Error("Failed to fetch next L1 origin",
+			los.log.Error("[L1OriginSelector] Failed to fetch next L1 origin",
 				"current_origin", currentOrigin.ID(),
 				"current_origin_number", currentOrigin.Number,
 				"err", err)
 			return eth.L1BlockRef{}, fmt.Errorf("cannot build next L2 block past current L1 origin %s by more than sequencer time drift, and failed to find next L1 origin: %w", currentOrigin, err)
 		}
-		los.log.Info("Fetched next origin",
+		los.log.Info("[L1OriginSelector] Fetched next origin",
 			"next_origin", nextOrigin.ID(),
 			"next_origin_number", nextOrigin.Number,
 			"next_origin_time", nextOrigin.Time)
@@ -150,14 +153,14 @@ func (los *L1OriginSelector) FindL1Origin(ctx context.Context, l2Head eth.L2Bloc
 
 	// If the next origin is ahead of the L2 head, we must return the current origin.
 	if l2Head.Time+los.cfg.BlockTime < nextOrigin.Time {
-		los.log.Info("Next L2 block time is before next origin time, using current origin",
+		los.log.Info("[L1OriginSelector] Next L2 block time is before next origin time, using current origin",
 			"current_origin", currentOrigin.ID(),
 			"next_l2_time", l2Head.Time+los.cfg.BlockTime,
 			"next_origin_time", nextOrigin.Time)
 		return currentOrigin, nil
 	}
 
-	los.log.Info("Using next origin for L2 block (past max sequencer drift)",
+	los.log.Info("[L1OriginSelector] Using next origin for L2 block (past max sequencer drift)",
 		"next_origin", nextOrigin.ID(),
 		"next_origin_number", nextOrigin.Number)
 	return nextOrigin, nil
@@ -215,7 +218,8 @@ func (los *L1OriginSelector) maybeSetNextOrigin(nextOrigin eth.L1BlockRef) {
 
 	// Set the next origin if it is the immediate child of the current origin.
 	if nextOrigin.ParentHash != los.currentOrigin.Hash {
-		los.log.Trace("Next origin is not the immediate child of the current origin, but we still set next origin", "next_origin", nextOrigin.ID(), "next_origin_number", nextOrigin.Number)
+		los.log.Debug("Next origin is not the immediate child of the current origin, skip set next origin", "next_origin", nextOrigin.ID(), "next_origin_number", nextOrigin.Number)
+		return
 	}
 	los.nextOrigin = nextOrigin
 	los.log.Info("Setting next origin", "next_origin", nextOrigin.ID(), "next_origin_number", nextOrigin.Number)
@@ -279,46 +283,4 @@ func (los *L1OriginSelector) reset() {
 
 	los.currentOrigin = eth.L1BlockRef{}
 	los.nextOrigin = eth.L1BlockRef{}
-}
-
-// 在L1OriginSelector中添加
-func (los *L1OriginSelector) startBackgroundFetcher() {
-	go func() {
-		ticker := time.NewTicker(5 * time.Second)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ticker.C:
-				los.batchFetchNextOrigins()
-			case <-los.ctx.Done():
-				return
-			}
-		}
-	}()
-}
-
-func (los *L1OriginSelector) batchFetchNextOrigins() {
-	ctx, cancel := context.WithTimeout(los.ctx, 5*time.Second)
-	defer cancel()
-
-	los.mu.Lock()
-	currentOrigin := los.currentOrigin
-	los.mu.Unlock()
-
-	if currentOrigin == (eth.L1BlockRef{}) {
-		return
-	}
-
-	// 尝试获取多个区块
-	for i := uint64(1); i <= 10; i++ { // 一次尝试获取10个区块
-		_, err := los.fetch(ctx, currentOrigin.Number+i)
-		if err != nil {
-			if !errors.Is(err, ethereum.NotFound) {
-				los.log.Warn("Failed to batch fetch origin", "number", currentOrigin.Number+i, "err", err)
-			} else {
-				los.log.Info("No more L1 blocks to fetch", "number", currentOrigin.Number+i)
-			}
-			break
-		}
-	}
 }
