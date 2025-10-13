@@ -183,6 +183,7 @@ func (s *Driver) eventLoop() {
 		sequencerCh = sequencerTimer.C
 		if len(sequencerCh) > 0 { // empty if not already drained before resetting
 			<-sequencerCh
+			s.log.Debug("[Driver] Cleared untriggered sequencerCh")
 		}
 		delta := time.Until(nextAction)
 		s.log.Info("[Driver] Scheduled sequencer action", "delta", delta)
@@ -225,10 +226,10 @@ func (s *Driver) eventLoop() {
 
 		select {
 		case <-sequencerCh:
-			s.log.Debug("[Driver] Received sequencerCh")
+			s.log.Debug("[Driver] Triggered sequencerCh")
 			s.Emitter.Emit(sequencing.SequencerActionEvent{})
 		case <-altSyncTicker.C:
-			s.log.Debug("[Driver] Received altSyncTicker.C")
+			s.log.Debug("[Driver] Triggered altSyncTicker.C")
 			// Check if there is a gap in the current unsafe payload queue.
 			ctx, cancel := context.WithTimeout(s.driverCtx, time.Second*2)
 			err := s.checkForGapInUnsafeQueue(ctx)
@@ -271,13 +272,13 @@ func (s *Driver) eventLoop() {
 			s.emitter.Emit(finality.FinalizeL1Event{FinalizedL1: newL1Finalized})
 			reqStep() // we may be able to mark more L2 data as finalized now
 		case <-s.sched.NextDelayedStep():
-			s.log.Debug("[Driver] received next delayed step")
+			s.log.Debug("[Driver] received next delayed step signal")
 			s.emitter.Emit(StepAttemptEvent{})
 		case <-s.sched.NextStep():
-			s.log.Debug("[Driver] received next step")
+			s.log.Debug("[Driver] received next step signal")
 			s.emitter.Emit(StepAttemptEvent{})
 		case respCh := <-s.stateReq:
-			s.log.Debug("[Driver] received stateReq")
+			s.log.Debug("[Driver] received stateReq signal")
 			respCh <- struct{}{}
 		case respCh := <-s.forceReset:
 			s.log.Warn("[Driver] Derivation pipeline is manually reset")
@@ -285,7 +286,7 @@ func (s *Driver) eventLoop() {
 			s.metrics.RecordPipelineReset()
 			close(respCh)
 		case <-s.driverCtx.Done():
-			s.log.Debug("[Driver] received driverCtx.Done")
+			s.log.Debug("[Driver] received driverCtx.Done signal")
 			return
 		}
 	}

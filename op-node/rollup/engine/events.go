@@ -349,7 +349,7 @@ func NewEngDeriver(log log.Logger, ctx context.Context, cfg *rollup.Config,
 	metrics Metrics, ec *EngineController,
 ) *EngDeriver {
 	return &EngDeriver{
-		log:     log,
+		log:     log.With("class", "[EngDeriver]"),
 		cfg:     cfg,
 		ec:      ec,
 		ctx:     ctx,
@@ -362,6 +362,7 @@ func (d *EngDeriver) AttachEmitter(em event.Emitter) {
 }
 
 func (d *EngDeriver) OnEvent(ev event.Event) bool {
+	d.log.Debug("received event", "event", ev)
 	switch x := ev.(type) {
 	case TryBackupUnsafeReorgEvent:
 		// If we don't need to call FCU to restore unsafeHead using backupUnsafe, keep going b/c

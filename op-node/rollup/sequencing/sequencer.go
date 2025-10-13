@@ -133,7 +133,7 @@ func NewSequencer(driverCtx context.Context, log log.Logger, rollupCfg *rollup.C
 ) *Sequencer {
 	return &Sequencer{
 		ctx:              driverCtx,
-		log:              log,
+		log:              log.With("class", "[Sequencer]"),
 		rollupCfg:        rollupCfg,
 		spec:             rollup.NewChainSpec(rollupCfg),
 		listener:         listener,
@@ -159,50 +159,49 @@ func (d *Sequencer) OnEvent(ev event.Event) bool {
 	preOk := d.nextActionOK
 	defer func() {
 		if d.nextActionOK != preOk || d.nextAction != preTime {
-			d.log.Debug("[Sequencer] action schedule changed",
+			d.log.Debug("action schedule changed",
 				"time", d.nextAction, "wait", d.nextAction.Sub(d.timeNow()), "ok", d.nextActionOK, "event", ev)
 		}
 	}()
 
 	switch x := ev.(type) {
 	case engine.BuildStartedEvent:
-		d.log.Debug("[Sequencer] received BuildStartedEvent")
+		d.log.Debug("received BuildStartedEvent")
 		d.onBuildStarted(x)
 	case engine.InvalidPayloadAttributesEvent:
-		d.log.Debug("[Sequencer] received InvalidPayloadAttributesEvent")
+		d.log.Debug("received InvalidPayloadAttributesEvent")
 		d.onInvalidPayloadAttributes(x)
 	case engine.BuildSealedEvent:
-		d.log.Debug("[Sequencer] received BuildSealedEvent")
+		d.log.Debug("received BuildSealedEvent")
 		d.onBuildSealed(x)
 	case engine.PayloadSealInvalidEvent:
-		d.log.Debug("[Sequencer] received PayloadSealInvalidEvent")
+		d.log.Debug("received PayloadSealInvalidEvent")
 		d.onPayloadSealInvalid(x)
 	case engine.PayloadSealExpiredErrorEvent:
-		d.log.Debug("[Sequencer] received PayloadSealExpiredErrorEvent")
+		d.log.Debug("received PayloadSealExpiredErrorEvent")
 		d.onPayloadSealExpiredError(x)
 	case engine.PayloadInvalidEvent:
-		d.log.Debug("[Sequencer] received PayloadInvalidEvent")
+		d.log.Debug("received PayloadInvalidEvent")
 		d.onPayloadInvalid(x)
 	case engine.PayloadSuccessEvent:
-		d.log.Debug("[Sequencer] received PayloadSuccessEvent")
+		d.log.Debug("received PayloadSuccessEvent")
 		d.onPayloadSuccess(x)
 	case SequencerActionEvent:
-		d.log.Debug("[Sequencer] received SequencerActionEvent")
+		d.log.Debug("received SequencerActionEvent")
 		d.onSequencerAction(x)
 	case rollup.EngineTemporaryErrorEvent:
-		d.log.Debug("[Sequencer] received EngineTemporaryErrorEvent")
+		d.log.Debug("received EngineTemporaryErrorEvent")
 		d.onEngineTemporaryError(x)
 	case rollup.ResetEvent:
-		d.log.Debug("[Sequencer] received ResetEvent")
+		d.log.Debug("received ResetEvent")
 		d.onReset(x)
 	case engine.EngineResetConfirmedEvent:
-		d.log.Debug("[Sequencer] received EngineResetConfirmedEvent")
+		d.log.Debug("received EngineResetConfirmedEvent")
 		d.onEngineResetConfirmedEvent(x)
 	case engine.ForkchoiceUpdateEvent:
-		d.log.Debug("[Sequencer] received ForkchoiceUpdateEvent")
+		d.log.Debug("received ForkchoiceUpdateEvent")
 		d.onForkchoiceUpdate(x)
 	default:
-		d.log.Debug("[Sequencer] received unknown event", "event", ev)
 		return false
 	}
 	return true
@@ -549,7 +548,7 @@ func (d *Sequencer) startBuildingBlock() {
 	if !(l2Head.L1Origin.Hash == l1Origin.ParentHash || l2Head.L1Origin.Hash == l1Origin.Hash) {
 		// fmt.Printf("l2 unsafe head origin is no longer canonical, need reset to resolve: canonical: %v; unsafe origin: %v; but skip now\n", l2Head.L1Origin, l1Origin)
 		d.metrics.RecordSequencerInconsistentL1Origin(l2Head.L1Origin, l1Origin.ID())
-		d.emitter.Emit(rollup.ResetEvent{Err: fmt.Errorf(" [BlockHash Issue] cannot build new L2 block with L1 origin %s (parent L1 %s) on current L2 head %s with L1 origin %s",
+		d.emitter.Emit(rollup.ResetEvent{Err: fmt.Errorf("[BlockHash Issue] cannot build new L2 block with L1 origin %s (parent L1 %s) on current L2 head %s with L1 origin %s",
 			l1Origin, l1Origin.ParentHash, l2Head, l2Head.L1Origin)})
 		return
 	}
