@@ -62,7 +62,7 @@ func NewRPCReceiptsFetcher(client rpcClient, log log.Logger, config RPCReceiptsC
 	return &RPCReceiptsFetcher{
 		client:                  client,
 		basic:                   NewBasicRPCReceiptsFetcher(client, config.MaxBatchSize),
-		log:                     log,
+		log:                     log.With("class", "[RPCReceiptsFetcher]"),
 		provKind:                config.ProviderKind,
 		availableReceiptMethods: AvailableReceiptsFetchingMethods(config.ProviderKind),
 		lastMethodsReset:        time.Now(),
@@ -71,6 +71,7 @@ func NewRPCReceiptsFetcher(client rpcClient, log log.Logger, config RPCReceiptsC
 }
 
 func (f *RPCReceiptsFetcher) FetchReceipts(ctx context.Context, blockInfo eth.BlockInfo, txHashes []common.Hash) (result types.Receipts, err error) {
+	f.log.Debug("Fetching receipts")
 	m := f.PickReceiptsMethod(len(txHashes))
 	block := eth.ToBlockID(blockInfo)
 	switch m {

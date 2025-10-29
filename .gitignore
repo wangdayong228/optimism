@@ -52,3 +52,5 @@ __pycache__
 crytic-export
 mydoc
 *.cn.md
+
+tmp_doc

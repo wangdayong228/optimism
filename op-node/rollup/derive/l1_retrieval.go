@@ -61,6 +61,7 @@ func (l1r *L1Retrieval) NextData(ctx context.Context) ([]byte, error) {
 
 	l1r.log.Debug("fetching next piece of data")
 	data, err := l1r.datas.Next(ctx)
+	l1r.log.Debug("fetched next piece of data", "success", err == nil, "error", err)
 	if err == io.EOF {
 		l1r.datas = nil
 		return nil, io.EOF

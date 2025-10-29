@@ -40,7 +40,7 @@ type AttributesHandler struct {
 
 func NewAttributesHandler(log log.Logger, cfg *rollup.Config, ctx context.Context, l2 L2) *AttributesHandler {
 	return &AttributesHandler{
-		log:        log,
+		log:        log.With("class", "[AttributesHandler]"),
 		cfg:        cfg,
 		ctx:        ctx,
 		l2:         l2,

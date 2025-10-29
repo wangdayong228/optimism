@@ -122,7 +122,7 @@ func NewDerivationPipeline(log log.Logger, rollupCfg *rollup.Config, l1Fetcher L
 	stages := []ResettableStage{l1Traversal, l1Src, altDA, frameQueue, channelMux, chInReader, batchMux, attributesQueue}
 
 	return &DerivationPipeline{
-		log:       log,
+		log:       log.With("class", "[DerivationPipeline]"),
 		rollupCfg: rollupCfg,
 		l1Fetcher: l1Fetcher,
 		altDA:     altDA,
